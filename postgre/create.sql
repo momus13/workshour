@@ -6,13 +6,13 @@
 
 create table work_hours
 (
-	id smallserial not null constraint work_hours_pkey primary key,
+	id serial not null constraint work_hours_pkey primary key,
 	"dateTest" date not null,
-	"idCountry" smallint not null,
+	"idCalendar" smallint not null,
 	"workHour" smallint default 0 not null
 );
 
-create unique index work_hours_uindex on work_hours ("idCountry", "dateTest");
+create unique index work_hours_uindex on work_hours ("idCalendar", "dateTest");
 
 /*
  * Table for works schedule
@@ -28,20 +28,48 @@ create table lunch_hours
 );
 
 /*
- * Insert work hours for you country
+ * Insert work hours for you standard calendar
  * week - hour for weekday, week first day - sunday, default sunday & saturday - weekend
  */
 
-CREATE FUNCTION insert_works_hour (start DATE, stop DATE, country INTEGER, week CHAR(7) DEFAULT '0888880')
+CREATE FUNCTION insert_works_hour (start DATE, stop DATE, calendar INTEGER, week CHAR(7) DEFAULT '0888880')
 	RETURNS INTEGER
 AS $$
 DECLARE rows INTEGER;
 BEGIN
-	rows = 0;
+	rows := 0;
   WHILE (start < stop) LOOP
-      INSERT INTO work_hours ("idCountry","dateTest","workHour") VALUES (country,start,cast(substring(week, cast(EXTRACT(dow FROM start) as INT)+1,1) as smallint));
+      INSERT INTO work_hours ("idCalendar","dateTest","workHour") VALUES (calendar,start,cast(substring(week, cast(EXTRACT(dow FROM start) as INT)+1,1) as smallint));
       start := start + interval '1 day';
 			rows := rows + 1;
+    END LOOP;
+	RETURN rows;
+END;
+$$ LANGUAGE plpgsql;
+
+/*
+ * Insert work hours for you custom calendar
+ * days - array hour, for loop insertion
+ */
+
+CREATE FUNCTION insert_custom_works_hour (start DATE, stop DATE, calendar INTEGER, days SMALLINT[])
+	RETURNS INTEGER
+AS $$
+	DECLARE rows INTEGER;
+	DECLARE cnt INTEGER;
+	DECLARE i INTEGER;
+BEGIN
+	rows := 0;
+	i := 1;
+	cnt :=	array_length(days,1);
+  WHILE (start < stop) LOOP
+      INSERT INTO work_hours ("idCalendar","dateTest","workHour") VALUES (calendar,start,cast(days[i] as smallint));
+      start := start + interval '1 day';
+			rows := rows + 1;
+			i := i +1;
+		IF i > cnt THEN
+			i := 1;
+		END IF;
     END LOOP;
 	RETURN rows;
 END;
@@ -51,7 +79,7 @@ $$ LANGUAGE plpgsql;
  * Calculate work hours
  */
 
-CREATE FUNCTION take_works_hour (start TIMESTAMP, stop TIMESTAMP, country INTEGER, schedule INTEGER)
+CREATE FUNCTION take_works_hour (start TIMESTAMP, stop TIMESTAMP, calendar INTEGER, schedule INTEGER)
 	RETURNS INTEGER
 AS $$
 	DECLARE hours INTEGER;
@@ -62,31 +90,44 @@ AS $$
 	DECLARE w3 SMALLINT;
 	DECLARE w4 SMALLINT;
 BEGIN
-	SELECT sum("workHour") INTO hours from work_hours where "dateTest" >= start and "dateTest" < stop + interval '1 day' and "idCountry" = country;
-	SELECT "beginWork", "endWork", "beginLunch", "endLunch" INTO w1,w2,w3,w4 from lunch_hours where id = schedule;
-		bw := EXTRACT(HOUR FROM start);
-		ew := EXTRACT(HOUR FROM stop);
-		IF bw < w1 THEN
-			bw := 0;
-			ELSEIF bw > w2 THEN
-				bw := w2 - w1 + w3 - w4;
-				ELSEIF bw > w3 THEN
-					bw := w3 - w4 + (case when bw > w4 then bw else w4 end) - w1;
-					ELSE
-						bw := bw - w1;
-		END IF;
-		IF ew < w1 THEN
-			ew := w2 - w1 + w3 - w4;
-			ELSEIF ew > w2 THEN
+	IF schedule > 0 THEN
+		SELECT "beginWork", "endWork", "beginLunch", "endLunch" INTO w1,w2,w3,w4 from lunch_hours where id = schedule;
+			hours := w2 - w1 + w3 - w4;
+			bw := EXTRACT(HOUR FROM start);
+			ew := EXTRACT(HOUR FROM stop);
+			IF bw < w1 THEN
+				bw := 0;
+				ELSEIF bw > w2 THEN
+					bw := hours;
+					ELSEIF bw > w3 THEN
+						bw := w3 - w4 + (case when bw > w4 then bw else w4 end) - w1;
+						ELSE
+							bw := bw - w1;
+			END IF;
+			IF ew < w1 THEN
+				ew := hours;
+				ELSEIF ew > w2 THEN
+					ew := 0;
+					ELSEIF ew > w4 THEN
+						ew := w2 - ew;
+						ELSE
+							ew := w2 - (case when ew > w3 then w4 else ew - w3 + w4 end);
+			END IF;
+			SELECT "workHour" INTO w3 from work_hours where "dateTest" = cast(start as date) and "idCalendar" = calendar;
+			SELECT "workHour" INTO w4 from work_hours where "dateTest" = cast(stop as date) and "idCalendar" = calendar;
+			IF bw > w3 THEN
+				bw := w3;
+			END IF;
+			IF hours - ew >= w4 THEN
 				ew := 0;
-				ELSEIF ew > w4 THEN
-					ew := w2 - ew;
-					ELSE
-						ew := w2 - (case when ew > w3 then w4 else ew - w3 + w4 end);
+			ELSE
+				ew := ew - hours + w4;
+			END IF;
+		ELSE
+			bw := 0;
+			ew := 0;
 		END IF;
+		SELECT sum("workHour") INTO hours from work_hours where "dateTest" >= cast(start as date) and "dateTest" <= cast(stop as date) and "idCalendar" = calendar;
 	RETURN hours-bw-ew;
 END;
 $$ LANGUAGE plpgsql;
-
-
-
