@@ -92,36 +92,28 @@ AS $$
 BEGIN
 	IF schedule > 0 THEN
 		SELECT "beginWork", "endWork", "beginLunch", "endLunch" INTO w1,w2,w3,w4 from lunch_hours where id = schedule;
-			hours := w2 - w1 + w3 - w4;
+		hours := w1 - w3 + w4;
+		SELECT hours + "workHour" INTO w2 from work_hours where "dateTest" = cast(start as date) and "idCalendar" = calendar;
 			bw := EXTRACT(HOUR FROM start);
-			ew := EXTRACT(HOUR FROM stop);
 			IF bw < w1 THEN
 				bw := 0;
 				ELSEIF bw > w2 THEN
-					bw := hours;
+					bw := w2 - hours;
 					ELSEIF bw > w3 THEN
 						bw := w3 - w4 + (case when bw > w4 then bw else w4 end) - w1;
 						ELSE
 							bw := bw - w1;
 			END IF;
+		SELECT hours + "workHour" INTO w2 from work_hours where "dateTest" = cast(stop as date) and "idCalendar" = calendar;
+			ew := EXTRACT(HOUR FROM stop);
 			IF ew < w1 THEN
-				ew := hours;
+				ew := w2 - hours;
 				ELSEIF ew > w2 THEN
 					ew := 0;
 					ELSEIF ew > w4 THEN
 						ew := w2 - ew;
 						ELSE
 							ew := w2 - (case when ew > w3 then w4 else ew - w3 + w4 end);
-			END IF;
-			SELECT "workHour" INTO w3 from work_hours where "dateTest" = cast(start as date) and "idCalendar" = calendar;
-			SELECT "workHour" INTO w4 from work_hours where "dateTest" = cast(stop as date) and "idCalendar" = calendar;
-			IF bw > w3 THEN
-				bw := w3;
-			END IF;
-			IF hours - ew >= w4 THEN
-				ew := 0;
-			ELSE
-				ew := ew - hours + w4;
 			END IF;
 		ELSE
 			bw := 0;

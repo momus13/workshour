@@ -18,5 +18,6 @@ For PostgreSQL:
         INSERT INTO lunch_hours ("beginWork","endWork","beginLunch","endLunch") VALUES (9,18,13,14);
 6. Use
     select take_works_hour(datetime begin period,datetime end period,your calendar id,your scheduler id);
+    if scheduler id = 0 calculate full day
     for the sample:
         select take_works_hour('2018-07-01 15:05:22','2018-10-01 19:00:05',1,1);
