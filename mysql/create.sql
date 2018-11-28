@@ -28,7 +28,7 @@ create table lunch_hours
 
 /*
  * Insert work hours for you standard calendar
- * week - hour for weekday, week first day - monday, for null - default sunday & saturday - weekend
+ * week - hour for weekday, week first day - monday, for null - default saturday & sunday - weekend
  */
 
 DELIMITER $$
@@ -41,6 +41,33 @@ CREATE PROCEDURE insert_works_hour(start DATE, stop DATE, calendar SMALLINT, wee
     WHILE start < stop DO
       INSERT INTO work_hours (idCalendar,dateTest,workHour) VALUES (calendar,start,CAST(SUBSTRING(week, WEEKDAY(start)+1,1) as SIGNED));
       SET start = DATE_ADD(start, INTERVAL 1 DAY);
-			SET rows = rows + 1;
+      SET rows = rows + 1;
     END WHILE;
+END$$
+
+/*
+ * Insert work hours for you custom calendar
+ * days - array hour, for loop insertion. One day - two numeral, include zero, without separator (0001020304 e.t.c.)
+ */
+
+DELIMITER $$
+CREATE FUNCTION insert_custom_works_hour (start DATE, stop DATE, calendar INTEGER, days VARCHAR(100))
+	RETURNS INTEGER
+BEGIN
+	DECLARE rows INTEGER;
+	DECLARE cnt INTEGER;
+	DECLARE i INTEGER;
+	SET rows = 0;
+	SET i := 1;
+	SET cnt =	LENGTH(days);
+  WHILE (start < stop) DO
+      INSERT INTO work_hours (idCalendar,dateTest,workHour) VALUES (calendar,start,CAST(SUBSTRING(days,i,2) as SIGNED));
+      SET start = DATE_ADD(start, INTERVAL 1 DAY);
+			SET rows = rows + 1;
+			SET i = i + 2;
+		IF i > cnt THEN
+			SET i = 1;
+		END IF;
+    END WHILE;
+	RETURN rows;
 END$$
