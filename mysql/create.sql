@@ -1,4 +1,4 @@
-/*USE `yourschema`;*/
+/*USE `yourdatabase`;*/
 
 /*
  * Table for works calendar
@@ -58,7 +58,7 @@ BEGIN
 	DECLARE cnt INTEGER;
 	DECLARE i INTEGER;
 	SET rows = 0;
-	SET i := 1;
+	SET i = 1;
 	SET cnt =	LENGTH(days);
   WHILE (start < stop) DO
       INSERT INTO work_hours (idCalendar,dateTest,workHour) VALUES (calendar,start,CAST(SUBSTRING(days,i,2) as SIGNED));
