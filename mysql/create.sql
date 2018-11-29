@@ -71,3 +71,51 @@ BEGIN
     END WHILE;
 	RETURN rows;
 END$$
+
+/*
+ * Calculate work hours
+ */
+
+DELIMITER $$
+CREATE FUNCTION take_works_hour (start TIMESTAMP, stop TIMESTAMP, calendar INTEGER, schedule INTEGER)
+	RETURNS INTEGER
+BEGIN
+	DECLARE hours INTEGER;
+	DECLARE bw SMALLINT;
+	DECLARE ew SMALLINT;
+	DECLARE w1 SMALLINT;
+	DECLARE w2 SMALLINT;
+	DECLARE w3 SMALLINT;
+	DECLARE w4 SMALLINT;
+	IF schedule > 0 THEN
+		SELECT beginWork, endWork, beginLunch, endLunch INTO w1,w2,w3,w4 from lunch_hours where id = schedule;
+		SET hours = w1 - w3 + w4;
+		SELECT hours + workHour INTO w2 from work_hours where dateTest = cast(start as date) and idCalendar = calendar;
+			SET bw = HOUR(start);
+			IF bw < w1 THEN
+				SET bw = 0;
+				ELSEIF bw > w2 THEN
+					SET bw = w2 - hours;
+					ELSEIF bw > w3 THEN
+						SET bw = w3 - w4 + (case when bw > w4 then bw else w4 end) - w1;
+						ELSE
+							SET bw = bw - w1;
+			END IF;
+		SELECT hours + workHour INTO w2 from work_hours where dateTest = cast(stop as date) and idCalendar = calendar;
+			SET ew = HOUR(stop);
+			IF ew < w1 THEN
+				SET ew = w2 - hours;
+				ELSEIF ew > w2 THEN
+					SET ew = 0;
+					ELSEIF ew > w4 THEN
+						SET ew = w2 - ew;
+						ELSE
+							SET ew = w2 - (case when ew > w3 then w4 else ew - w3 + w4 end);
+			END IF;
+		ELSE
+			SET bw = 0;
+			SET ew = 0;
+		END IF;
+		SELECT sum(workHour) INTO hours from work_hours where dateTest >= cast(start as date) and dateTest <= cast(stop as date) and idCalendar = calendar;
+	RETURN hours-bw-ew;
+END$$
