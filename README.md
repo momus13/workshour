@@ -4,7 +4,7 @@
 1. Change you schemas
 2. Create tables and function
 3. Fill work calendar<br />
-    SELECT * FROM insert_works_hour(begin date include,end date not include,your calendar id);<br />
+    SELECT * FROM insert_works_hour(begin date include,end date not include,your calendar id,\[you week work hours\]);<br />
     *for the sample:*<br />
         `SELECT * FROM insert_works_hour('2018-01-01','2020-01-01',1);`<br />
         or<br />
@@ -29,7 +29,7 @@
 1. Change you database
 2. Create tables and function
 3. Fill work calendar<br />
-    call insert_works_hour(begin date include,end date not include,your calendar id,you week work hours);<br />
+    call insert_works_hour(begin date include,end date not include,your calendar id,you week work hours(null - default));<br />
     for the sample:<br />
         `call insert_works_hour('2018-01-01','2020-01-01',1,null,@a);
         select @a;`<br />
@@ -55,7 +55,7 @@
 1. Change you database
 2. Create tables and function
 3. Fill work calendar<br />
-    execute insert_works_hour(begin date include,end date not include,your calendar id,you week work hours);<br />
+    execute insert_works_hour(begin date include,end date not include,your calendar id,\[you week work hours\]);<br />
     for the sample:<br />
         `execute insert_works_hour @start='2018-01-01',@stop='2020-01-01',@calendar = 1;`<br />
         or<br />
