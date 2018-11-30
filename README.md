@@ -1,4 +1,4 @@
-####For PostgreSQL:
+#### For PostgreSQL:
 *min version 9.4*
 
 1. Change you schemas
@@ -23,7 +23,7 @@
     for the sample:<br />
         `select take_works_hour('2018-07-01 15:05:22','2018-10-01 19:00:05',1,1);`
         
-####For MySQL:
+#### For MySQL:
 *min version 5.6*
 
 1. Change you database
@@ -49,7 +49,7 @@
     for the sample:<br />
         `select take_works_hour('2018-07-01 15:05:22','2018-10-01 19:00:05',1,1);`
         
-####For MS SQL:
+#### For MS SQL:
 *min version 2008*
 
 1. Change you database
