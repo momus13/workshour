@@ -19,11 +19,11 @@ CREATE UNIQUE INDEX work_hours_uindex ON work_hours (idCalendar, dateTest);
 
 create table lunch_hours
 (
-	id SMALLINT PRIMARY KEY NOT NULL AUTO_INCREMENT,
-	beginWork SMALLINT NOT NULL,
-	endWork SMALLINT NOT NULL,
-	beginLunch SMALLINT NOT NULL,
-	endLunch SMALLINT NOT NULL
+    id SMALLINT PRIMARY KEY NOT NULL AUTO_INCREMENT,
+    beginWork SMALLINT NOT NULL,
+    endWork SMALLINT NOT NULL,
+    beginLunch SMALLINT NOT NULL,
+    endLunch SMALLINT NOT NULL
 );
 
 /*
@@ -59,7 +59,7 @@ BEGIN
 	DECLARE i INTEGER;
 	SET rows = 0;
 	SET i = 1;
-	SET cnt =	LENGTH(days);
+	SET cnt = LENGTH(days);
   WHILE (start < stop) DO
       INSERT INTO work_hours (idCalendar,dateTest,workHour) VALUES (calendar,start,CAST(SUBSTRING(days,i,2) as SIGNED));
       SET start = DATE_ADD(start, INTERVAL 1 DAY);
